@@ -7,10 +7,21 @@ set(CMAKE_CXX_STANDART ON)
 find_package(OpenSSL REQUIRED)
 find_package(nlohmann_json 3.0 REQUIRED)
 
+add_library(core_lib STATIC 
+	src/core/block.cpp
+)
+
+target_include_directories(core_lib PUBLIC 
+	${CMAKE_SOURCE_DIR}/include
+)
+
 add_executable(nether 
 	src/main.cpp
 )
 
-target_link_libraries(nether
-	PRIVATE OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+target_link_libraries(nether PRIVATE
+	core_lib
+	OpenSSL::SSL 
+	OpenSSL::Crypto 
+	nlohmann_json::nlohmann_json
 )
