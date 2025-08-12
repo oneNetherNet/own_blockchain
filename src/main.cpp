@@ -1,10 +1,14 @@
 #include <openssl/ssl.h>
 #include <nlohmann/json.hpp>
 #include <iostream>
-#include "core/block.h"
+#include "core/blockchain.h"
 
 int main() {
-    Block test(0, "0", "genesis");
-    std::cout << "genesis hash: " << test.get_hash();
+    Blockchain test;
+    test.add("Alice sends Bob 1 NET");
+    test.add("Bob sends Eva 1 NET");
+    std::cout << test.get_len() << std::endl << test.get_last().get_nonce() << std::endl;
+    if (test.is_valid()) std::cout << "is valid";
+    else std::cout << "isn't valid";
     return 0;
 }
