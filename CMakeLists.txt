@@ -10,6 +10,7 @@ find_package(nlohmann_json 3.0 REQUIRED)
 add_library(core_lib STATIC 
 	src/core/block.cpp
 	src/core/blockchain.cpp
+	src/core/transactions.cpp
 )
 
 target_include_directories(core_lib PUBLIC 

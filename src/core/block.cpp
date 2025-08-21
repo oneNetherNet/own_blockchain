@@ -1,7 +1,6 @@
 #include "core/block.h"
 #include <iomanip>
 #include <sstream>
-#include <iostream>
 #include <thread>
 #include <atomic>
 #include <vector>
@@ -15,8 +14,8 @@ std::string sha256(std::string str) {
 	SHA256_Final(hash, &sha256);
 
 	std::stringstream ss;
-	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-		ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+	for (size_t i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+		ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
 	}
 	return ss.str();
 }
@@ -30,7 +29,6 @@ Block::Block(const uint64_t id, const std::string& prev_hash, const std::string&
 void Block::mine(uint32_t difficulty) {
     std::string target(difficulty, '0');
     std::atomic<bool> found(false);
-    uint64_t start_nonce = 0;
     const uint32_t num_threads = std::thread::hardware_concurrency();
 
     auto worker = [&](uint64_t start) {
@@ -45,12 +43,13 @@ void Block::mine(uint32_t difficulty) {
                 break;
             }
             local_nonce += num_threads;
+            if (!local_nonce) t_stamp = std::time(nullptr);
         }
     };
 
     std::vector<std::thread> threads;
-    for (uint32_t i = 0; i < num_threads; ++i) {
-        threads.emplace_back(worker, start_nonce + i);
+    for (size_t i = 0; i < num_threads; ++i) {
+        threads.emplace_back(std::thread(worker, i));
     }
     for (auto& t : threads) {
         t.join();
@@ -67,4 +66,23 @@ std::string Block::calc_hash_n(uint64_t nonce) const {
     std::stringstream ss;
     ss << id << t_stamp << prev_hash << data << nonce;
     return sha256(ss.str());
+}
+
+nlohmann::json Block::serialize() const{
+    return {
+        {"id", id},
+        {"time", t_stamp},
+        {"prev", prev_hash},
+        {"hash", hash},
+        {"data", data},
+        {"nonce", nonce}
+    };
+}
+
+Block Block::deserialize(const nlohmann::json& j) const{
+    Block new_block(j["id"], j["prev"], j["data"]);
+    new_block.t_stamp = j["time"];
+    new_block.hash = j["hash"];
+    new_block.nonce = j["nonce"];
+    return new_block;
 }
